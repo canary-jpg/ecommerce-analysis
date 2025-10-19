@@ -1,0 +1,19 @@
+# Environment
+.env
+*.env
+venv/
+__pycache__/
+
+# Data
+*.csv
+*.json
+data/
+raw_data/
+
+#dbt
+target/
+dbt_packages/
+logs/
+
+# OS
+.DS_Store
