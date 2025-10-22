@@ -1,0 +1,7 @@
+version: 2
+
+sources:
+  - name: raw
+    schema: raw     # <- use your actual schema name here
+    tables:
+      - name: products
