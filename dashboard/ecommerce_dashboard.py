@@ -114,6 +114,113 @@ else:
     st.info("No price drops detected yet!")
 
 
+#smart buy recommendations
+st.markdown('---')
+st.subheader('🎯 Smart Buy Recommendations')
+
+recommendations = load_data(""" 
+    SELECT
+        product_name,
+        category,
+        current_price,
+        historical_low,
+        buy_score,
+        recommendation,
+        deal_rating,
+        potential_savings_dollars,
+        pct_above_low
+    FROM buy_recommendations
+    ORDER BY buy_score DESC
+    LIMIT 10
+""")
+
+if len(recommendations) > 0:
+    col1, col2 = st.columns([2, 1])
+
+    with col1:
+        def color_recommendation(val):
+            colors = {
+                'BUY_NOW': 'background-color: #90EE90',
+                'STRONG_BUY': 'background-color: #00FF00',
+                'BUY_SOON': 'background-color: #FFFF99',
+                'WAIT_FOR_DROP': 'background-color: #FFB6C1',
+                'MONITOR': 'background-color: #D3D3D3'
+            }
+            return colors.get(val)
+        styled_df = recommendations[['product_name', 'current_price', 'historical_low', 
+                                    'recommendation', 'buy_score', 'potential_savings_dollars']].style.applymap(
+                                        color_recommendation, subset=['recommendation']
+                                    )
+        st.dataframe(
+            recommendations[['product_name', 'category', 'current_price', 'recommendation',
+                            'buy_score', 'potential_savings_dollars']].rename(columns={
+                                'product_name': 'Product',
+                                'category': 'Category',
+                                'current_price': 'Current Price',
+                                'recommendation': 'Recommendation',
+                                'buy_score': 'Buy Score',
+                                'potential_savings_dollars': 'Potential Savings'
+                            }),
+                            use_container_width=True,
+                            hide_index=True 
+        )
+    
+    with col2:
+        fig = px.histogram(
+            recommendations,
+            x='buy_score',
+            title='Buy Score Distribution',
+            labels={'buy_score': 'Buy Score', 'count': 'Products'}
+        )
+        st.plotly_chart(fig, use_container_width=True)
+
+
+#best day to but analysis
+st.markdown('---')
+st.subheader('📆 Best Time to Buy')
+
+seasonal = load_data("""
+    SELECT
+        product_name,
+        category,
+        best_day_name,
+        best_day_price,
+        overall_avg_price,
+        potential_savings_pct
+    FROM seasonal_patterns
+    ORDER BY potential_savings_pct DESC
+    LIMIT 10
+ """)
+
+if len(seasonal) > 0:
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.dataframe(
+            seasonal.rename(columns={
+                'product_name': 'Product',
+                'category': 'Category',
+                'best_day_name': 'best Day',
+                'best_day_price': 'Price on Best Day',
+                'potential_savings_pct': 'Potential Savings %'
+            }),
+            use_container_width=True,
+            hide_index=True
+        )
+
+    with col2:
+        day_counts = seasonal['best_day_name'].value_counts().reset_index()
+        day_counts.columns = ['Day', 'Count']
+
+        fig = px.bar(
+            day_counts,
+            x='Day',
+            y='Count',
+            title='Most Common Best Days to Buy',
+            labels={'Day': 'Day of Week', 'Count': 'Number of Products'}
+        )
+        st.plotly_chart(fig, use_container_width=True)
+
 #category analysis
 st.markdown("---")
 st.subheader("📊 Price Analysis by Category")
